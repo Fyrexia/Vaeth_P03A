@@ -8,9 +8,12 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] AudioClip _startingSong;
     [SerializeField] Text highScoreTextView;
 
+    
+    private int highScore;
+
     private void Start()
     {
-        int highScore = PlayerPrefs.GetInt("HighScore");
+        highScore = PlayerPrefs.GetInt("HighScore");
         highScoreTextView.text = highScore.ToString();
         
             if(_startingSong != null)
@@ -20,8 +23,17 @@ public class MainMenuController : MonoBehaviour
         
     }
 
+    public void ResetData()
+    {
+        highScore = 0;
+        highScoreTextView.text = highScore.ToString();
+        PlayerPrefs.SetInt("HighScore", highScore);
+    }
 
-
+    public void QuitGame()
+    {
+        Application.Quit();
+    }
 
 
 }
