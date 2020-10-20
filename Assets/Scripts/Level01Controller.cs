@@ -10,17 +10,18 @@ public class Level01Controller : MonoBehaviour
     [SerializeField] GameObject PauseMenu;
     [SerializeField] Text Healthtxt;
     int currentScore;
-    public int HealthScore = 5;
+    //public int PC1.HP = 5;
     public int HealthDif = 5;
     public PlayerController PC1;
 
     private void Update()
     {
         
-        HealthScore=PC1.ReturnHealth();
-        if(HealthScore <= HealthDif)
+        //PC1.HP=PC1.ReturnHealth();
+        //This controls the GUI Health
+        if(PC1.HP <= HealthDif)
         {
-            HealthChange(HealthScore);
+            HealthChange(PC1.HP);
         }
 
 
@@ -32,7 +33,7 @@ public class Level01Controller : MonoBehaviour
         if(Input.GetKeyDown(KeyCode.F))
         {
             PC1.UpdateHealth(-1);
-            HealthChange(HealthScore);
+            HealthChange(PC1.HP);
         }
 
         if (Input.GetKeyDown(KeyCode.Escape))
@@ -42,8 +43,8 @@ public class Level01Controller : MonoBehaviour
             PauseMenu.SetActive(true);
             PC1.GetIsPlaying(false);
         }
-
-        HealthDif = HealthScore;
+        //This controls the GUI Health
+        HealthDif = PC1.HP;
     }
 
     public void LockGame()
@@ -58,10 +59,11 @@ public class Level01Controller : MonoBehaviour
         currentScoreTextView.text = "Score: " + currentScore.ToString();
     }
 
+    //This controls the GUI Health
     public void HealthChange(int HealthChange)
     {
-        HealthScore = HealthChange;
-        Healthtxt.text = "Health: " + HealthScore.ToString();
+        PC1.HP = HealthChange;
+        Healthtxt.text = "Health: " + PC1.HP.ToString();
     }
 
     public void ExitLevel()

@@ -11,25 +11,27 @@ public class PlayerController : MonoBehaviour
     FPSInput input = null;
     FPSMotor motor = null;
 
-    int HP = 5;
-
+    public int HP = 5;
+    private bool isRolling = false;
     public bool IsPlaying = true;
 
     [SerializeField] float moveSpeed = .1f;
     [SerializeField] float turnSpeed = 6f;
     [SerializeField] float jumpStrength = 10f;
-
-    [SerializeField] ParticleSystem MuzzleFlash = null;
-    [SerializeField] AudioSource GunShot = null;
+    [SerializeField] float DodgeTimer = 3f;
+    [SerializeField] float DodgeSpeed = .3f;
+    [SerializeField] float DodgeCooldown = 3f;
+    //[SerializeField] ParticleSystem MuzzleFlash = null;
+    //[SerializeField] AudioSource GunShot = null;
     [SerializeField] Text YouLose = null;
     [SerializeField] Image HealthGUI = null;
-
+    float OGmoveSpeed=0;
 
     private void Awake()
     {
         input = GetComponent<FPSInput>();
         motor = GetComponent<FPSMotor>();
-
+        OGmoveSpeed = moveSpeed;
     }
 
     private void Start()
@@ -44,20 +46,34 @@ public class PlayerController : MonoBehaviour
         if (IsPlaying == true)
         {
 
+            if (Input.GetKeyDown(KeyCode.LeftShift) && Input.GetKey(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftShift) && Input.GetKey(KeyCode.D) || Input.GetKeyDown(KeyCode.LeftShift) && Input.GetKey(KeyCode.S))
+            {
+                if (Input.GetKey(KeyCode.W) == false && isRolling!=true)
+                {
+                    //motor.Dodge();
+                    moveSpeed = DodgeSpeed;
+                    isRolling = true;
+                    DelayHelper.DelayAction(this, RegressSpeed, .25f);
+                    
+                }
 
-            if (Input.GetKeyDown(KeyCode.LeftShift))
+            }
+            else if (Input.GetKey(KeyCode.LeftShift) && isRolling!=true)
             {
                 moveSpeed = .2f;
             }
             else if (Input.GetKeyUp(KeyCode.LeftShift))
-                moveSpeed = .1f;
-
-            if (Input.GetKeyDown(KeyCode.Mouse0))
+                moveSpeed = OGmoveSpeed;
+                
+           
+            /*
+            if (Input.GetKeyDown(KeyCode.Mouse1))
             {
-                Debug.Log("Shoot!");
-                MuzzleFlash.Play();
-                GunShot.Play();
-            }
+                //Debug.Log("Shoot!");
+                //MuzzleFlash.Play();
+                //Sound
+                //GunShot.Play();
+            }*/
 
 
         }
@@ -68,6 +84,23 @@ public class PlayerController : MonoBehaviour
             YouLose.text = "You Lose! Press Escape and click restart!";
         }
 
+    }
+
+    void RegressSpeed()
+    {
+        moveSpeed = DodgeSpeed*.25f;
+        DelayHelper.DelayAction(this, ChangeSpeedToNormal, .25f);
+    }
+
+    void ChangeSpeedToNormal()
+    {
+        moveSpeed = OGmoveSpeed;
+        DelayHelper.DelayAction(this, RollingCooldown, DodgeCooldown);
+    }
+
+    void RollingCooldown()
+    {
+        isRolling = false;
     }
 
     public void UpdateHealth(int HPupdate)
@@ -115,6 +148,9 @@ public class PlayerController : MonoBehaviour
             motor.Move(movement * moveSpeed);
         }
     }
+
+    
+
 
     void OnRotate(Vector3 rotation)
     {

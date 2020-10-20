@@ -5,7 +5,9 @@ using UnityEngine;
 public class HazardVolume : MonoBehaviour
 {
     [SerializeField] GameObject visualsToDeactivate = null;
-
+    [SerializeField] float DisableAtTime = 0f;
+    [SerializeField] bool BeDisabled = false;
+    private float Timer1 = 0f;
     Collider colliderToDeactivate = null;
    
 
@@ -22,11 +24,20 @@ public class HazardVolume : MonoBehaviour
 
         if (player1 != null)
         {
+            Debug.Log("player has been hit");
             player1.UpdateHealth(-1);
             DisableObject();
            
         }
 
+        if(BeDisabled==true)
+        {
+            Timer1 += Time.deltaTime;
+            if(Timer1>DisableAtTime)
+            {
+                DisableObject();
+            }
+        }
        
 
     }
