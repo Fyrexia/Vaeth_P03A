@@ -11,11 +11,18 @@ public class FireWeapon : MonoBehaviour
     [SerializeField] float IceGunCooldown = .25f;
     [SerializeField] float RegGunCooldown = .75f;
     [SerializeField] LayerMask HitLayer;
+    [SerializeField] LayerMask HitLayerIce;
     //[SerializeField] Text HitCircle;
+    //Icebullets
     [SerializeField] GameObject IceBullet = null;
     [SerializeField] float IceshootSpeed;
     [SerializeField] GameObject IceshootTarget=null;
     [SerializeField] float IceBulletDecay = .7f;
+    //Icewall
+    [SerializeField] IceWallGrowth IceWall = null;
+    [SerializeField] float IceWallCooldown = 1f;
+    bool CanIceWall = true;
+
 
     //float NothingHitTimer = 0f;
 
@@ -23,6 +30,7 @@ public class FireWeapon : MonoBehaviour
     [SerializeField] AudioSource GunShot = null;
 
     RaycastHit rayHit; //object hit
+    RaycastHit rayIceWallHit;
     //Swapmode 1 is Regular Gun
     //Swampode 0 is Ice Gun
     int SwapMode = 0;
@@ -48,6 +56,7 @@ public class FireWeapon : MonoBehaviour
             if (CanRegShoot == true)
             {
                 DelayHelper.DelayAction(this, RegGunOnCooldown, RegGunCooldown);
+                SwapMode = 1;
                 Shoot();
                 //Debug.Log("doing regular shot");
                 CanRegShoot = false;
@@ -55,10 +64,21 @@ public class FireWeapon : MonoBehaviour
                 MuzzleFlash.Play();
                 //Sound
                 GunShot.Play();
+                
             }
-            SwapMode = 1;
+            
 
         }
+        if(Input.GetKey(KeyCode.F))
+        {
+            if (CanIceWall == true)
+            {
+                DelayHelper.DelayAction(this, IceWallOnCooldown, IceWallCooldown);
+                IceWallMaker();
+                CanIceWall = false;
+            }
+        }
+
         /*
         NothingHitTimer += Time.deltaTime;
         if (NothingHitTimer >= .6f)
@@ -77,6 +97,14 @@ public class FireWeapon : MonoBehaviour
         //Debug.Log("no longer on cooldown = " + CanRegShoot);
     }
 
+    void IceWallOnCooldown()
+    {
+
+        CanIceWall = true;
+        //Debug.Log("no longer on cooldown = " + CanRegShoot);
+    }
+
+
     void Shoot()
     {
         float tempDistance = 0f;
@@ -85,22 +113,22 @@ public class FireWeapon : MonoBehaviour
         //Regular Gun
         if (SwapMode == 1)
         {
-
+            Debug.DrawRay(rayOrigin.position, rayDirection * RegshootDistance, Color.red, 1f);
             tempDistance = RegshootDistance;
         }
         //Ice Gun
-        if (SwapMode == 0)
+        else if (SwapMode == 0)
         {
             //Debug.Log("Shooting the icerays");
             tempDistance = IceGunDistance;
         }
 
-        if (Physics.Raycast(rayOrigin.position, rayDirection, out rayHit, tempDistance, HitLayer))
+        if (Physics.Raycast(rayOrigin.position, rayDirection, out rayHit, tempDistance, HitLayer) && SwapMode==1)
         {
             Debug.Log("Hit " + rayHit.transform.name + " at " + rayHit.transform.position);
             //LightHit.transform.position = rayHit.point;
             if(SwapMode==1)
-            Debug.DrawRay(rayOrigin.position, rayDirection * RegshootDistance, Color.red, 1f);
+           
 
 
             if (rayHit.transform.tag == "Enemy")
@@ -123,7 +151,7 @@ public class FireWeapon : MonoBehaviour
         }
         else
         {
-            Debug.Log("Miss");
+            //Debug.Log("Miss");
         }
 
         //Apply Freeze if Swampmode 0
@@ -143,7 +171,7 @@ public class FireWeapon : MonoBehaviour
             */
 
             //However, to make it more of an aoe range like an ice sprayer, it's more effective to make an inisible bullet thats big
-            Debug.Log("Shooting the icerays");
+            //Debug.Log("Shooting the icerays");
             GameObject Icebullet1 = Instantiate(IceBullet, rayOrigin.transform.position, Quaternion.identity);
             Icebullet1.transform.LookAt(IceshootTarget.transform.position);
             Rigidbody rb1 = Icebullet1.GetComponent<Rigidbody>();
@@ -159,6 +187,41 @@ public class FireWeapon : MonoBehaviour
         if (SwapMode == 0)
             FreezeShoot = 0;
     }
+
+    void IceWallMaker()
+    {
+        Vector3 rayDirection = cameraController.transform.forward;
+        //Debug.Log("testing to see if wall will spawn");
+        Debug.DrawRay(rayOrigin.position, rayDirection * 15f, Color.green, 3f);
+        if (Physics.Raycast(rayOrigin.position, rayDirection, out rayIceWallHit, 15f, HitLayerIce))
+        {
+            IceWall.EnableObject();
+            //Debug.Log("Hit " + rayIceWallHit.transform.name + " at " + rayIceWallHit.transform.position);
+            IceWall.transform.position = rayIceWallHit.point;
+            IceWall.transform.LookAt(rayOrigin.transform);
+
+            IceWall.transform.eulerAngles = new Vector3
+                (
+                IceWall.transform.eulerAngles.x * 0,
+                IceWall.transform.eulerAngles.y,
+                IceWall.transform.eulerAngles.z * 0
+                );
+
+            //Debug.Log(IceWall.name + " spawned at " + IceWall.transform.position);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
     /*
     void swapToWhite()
     {

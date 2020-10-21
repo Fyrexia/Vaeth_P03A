@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerDetector : MonoBehaviour
 {
@@ -12,22 +10,36 @@ public class PlayerDetector : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (other.CompareTag("Player") && Enemy1.Health>0)
         {
-            Debug.Log("Player has entered");
+            //Debug.Log("Player has entered");
             Enemy1.targetingOn = true;
+            Enemy1.PlayerPos = other.transform.position;
+            if (Enemy1.rb == null)
+                Enemy1.rb = other.GetComponent<Rigidbody>();
         }
     }
 
     private void OnTriggerStay(Collider other)
     {
-        Debug.Log("Player is staying");
-        Enemy1.targetingOn = true;
+        if (other.CompareTag("Player") && Enemy1.Health > 0)
+        {
+            //Debug.Log("Player is staying");
+            Enemy1.targetingOn = true;
+            Enemy1.PlayerPos = other.transform.position;
+        }
     }
     private void OnTriggerExit(Collider other)
     {
-        Debug.Log("Player has left");
-        Enemy1.targetingOn = false;
+        if (other.CompareTag("Player") && Enemy1.Health > 0)
+        {
+            //Debug.Log("Player has left");
+
+            Enemy1.targetingOn = false;
+
+            
+            
+        }
     }
 
 

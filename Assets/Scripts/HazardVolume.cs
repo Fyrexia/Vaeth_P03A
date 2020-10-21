@@ -29,6 +29,10 @@ public class HazardVolume : MonoBehaviour
             DisableObject();
            
         }
+        else if(other.transform.tag == "Ice")
+        {
+            DisableObject();    
+        }
 
         if(BeDisabled==true)
         {

@@ -3,18 +3,19 @@ using UnityEngine.UI;
 public class Enemy : MonoBehaviour
 {
     //Stores Player Info
-    [SerializeField] GameObject Player = null;
+    public GameObject Player = null;
+    public Vector3 PlayerPos;
     //[SerializeField] GameObject ProjectionCube = null;
     [SerializeField] Text HitCircle;
     //Intergers and inside units
-    [SerializeField] int Health = 5;
+    public int Health = 5;
     bool IsFreezeOn = false;
     bool beginUnfreeze = false;
     private int frameUnFreeze = 0;
     private int frameStartUnFreeze = 0;
     private float NothingHitTimer = 0;
 
-    Rigidbody rb = null;
+    public Rigidbody rb = null;
     //Shooting Info
     [SerializeField] GameObject ShootingArea;
     private Vector3 targetpos;
@@ -112,9 +113,10 @@ public class Enemy : MonoBehaviour
             {
                 timerShoot += Time.deltaTime;
                 targetVelocity = rb.velocity;
-                targetpos = Player.transform.position;
-                distanceToTarget = Vector3.Distance(SphereCollider.transform.position, Player.transform.position);
-
+                //targetpos = Player.transform.position;
+                targetpos = PlayerPos;
+                //distanceToTarget = Vector3.Distance(SphereCollider.transform.position, Player.transform.position);
+                distanceToTarget = Vector3.Distance(SphereCollider.transform.position, PlayerPos);
                 if (timerShoot >= ShootCoolDown)
                 {
                     // Get target info
@@ -289,12 +291,11 @@ public class Enemy : MonoBehaviour
         {
             float projectileTimeToTarget = distanceToTarget / shootSpeed;
             Vector3 projectedTarget = targetpos + targetVelocity * projectileTimeToTarget;
-            //projectedTarget = predictedPosition(targetpos,ShootingArea.transform.position,targetVelocity,shootSpeed);
-            //ProjectionCube.transform.position = projectedTarget;
             GameObject bullet1 = Instantiate(projectile, ShootingArea.transform.position, Quaternion.identity);
             bullet1.transform.LookAt(projectedTarget);
-            Rigidbody rb = bullet1.GetComponent<Rigidbody>();
-            rb.velocity = bullet1.transform.forward * shootSpeed;
+            Rigidbody rb1 = bullet1.GetComponent<Rigidbody>();
+            rb1.velocity = bullet1.transform.forward * shootSpeed;
+           
         }
 
         timerShoot = 0f;

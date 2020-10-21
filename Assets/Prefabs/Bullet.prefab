@@ -124,5 +124,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   visualsToDeactivate: {fileID: 1800369359422124051}
-  DisableAtTime: 15
+  DisableAtTime: 10
   BeDisabled: 1

@@ -29,13 +29,13 @@ public class Level01Controller : MonoBehaviour
         {
             IncreaseScore(5);
         }
-
+        /*
         if(Input.GetKeyDown(KeyCode.F))
         {
             PC1.UpdateHealth(-1);
             HealthChange(PC1.HP);
         }
-
+        */
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             //ExitLevel();

@@ -22,7 +22,7 @@ public class IceFreeze : MonoBehaviour
         
             if (Enemy1 != null && other.transform.tag=="Enemy")
         {
-            Debug.Log("Hitting " + other.transform.name);
+            //Debug.Log("Hitting " + other.transform.name);
             Enemy1.FreezeAdd();
             Destroy(this.gameObject);
             
