@@ -9,10 +9,20 @@ public class Level01Controller : MonoBehaviour
     [SerializeField] Text currentScoreTextView;
     [SerializeField] GameObject PauseMenu;
     [SerializeField] Text Healthtxt;
+    [SerializeField] AudioSource MusicPlayer = null;
+    [SerializeField] AudioClip Music = null;
     int currentScore;
     //public int PC1.HP = 5;
     public int HealthDif = 5;
     public PlayerController PC1;
+    public bool EnemyIsPlaying = true;
+
+    public void Awake()
+    {
+        MusicPlayer.clip = Music;
+        MusicPlayer.Play();
+    }
+
 
     private void Update()
     {
@@ -25,10 +35,7 @@ public class Level01Controller : MonoBehaviour
         }
 
 
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            IncreaseScore(5);
-        }
+       
         /*
         if(Input.GetKeyDown(KeyCode.F))
         {
@@ -40,8 +47,11 @@ public class Level01Controller : MonoBehaviour
         {
             //ExitLevel();
             Cursor.lockState = CursorLockMode.Confined;
+            Cursor.visible = true;
             PauseMenu.SetActive(true);
             PC1.GetIsPlaying(false);
+            EnemyIsPlaying = false;
+          
         }
         //This controls the GUI Health
         HealthDif = PC1.HP;
@@ -50,7 +60,15 @@ public class Level01Controller : MonoBehaviour
     public void LockGame()
     {
         Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
         PC1.GetIsPlaying(true);
+        EnemyIsPlaying = true;
+        
+    }
+
+    public bool GetEnemyIsPlaying()
+    {
+        return EnemyIsPlaying;
     }
 
     public void IncreaseScore(int scoreIncrease)

@@ -3,10 +3,13 @@
 public class PlayerDetector : MonoBehaviour
 {
     [SerializeField] Enemy Enemy1 = null;
+    [SerializeField] GameObject SpottedSymbol = null;
 
 
-
-
+    private void Awake()
+    {
+        SpottedSymbol.SetActive(false);
+    }
 
     private void OnTriggerEnter(Collider other)
     {
@@ -17,6 +20,7 @@ public class PlayerDetector : MonoBehaviour
             Enemy1.PlayerPos = other.transform.position;
             if (Enemy1.rb == null)
                 Enemy1.rb = other.GetComponent<Rigidbody>();
+            SpottedSymbol.SetActive(true);
         }
     }
 
@@ -36,9 +40,9 @@ public class PlayerDetector : MonoBehaviour
             //Debug.Log("Player has left");
 
             Enemy1.targetingOn = false;
+            SpottedSymbol.SetActive(false);
 
-            
-            
+
         }
     }
 

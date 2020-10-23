@@ -7,6 +7,7 @@ TagManager:
   - Danger
   - Enemy
   - Ice
+  - IceWall
   layers:
   - Default
   - TransparentFX

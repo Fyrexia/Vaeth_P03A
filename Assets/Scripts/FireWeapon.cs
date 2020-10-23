@@ -6,8 +6,9 @@ public class FireWeapon : MonoBehaviour
     [SerializeField] Transform rayOrigin = null;
     [SerializeField] float RegshootDistance = 10f;
     [SerializeField] float IceGunDistance = 10f;
-    [SerializeField] Light LightHit;
+
     [SerializeField] int weaponDamage = 1;
+    [SerializeField] ParticleSystem GunHitImpact = null;
     [SerializeField] float IceGunCooldown = .25f;
     [SerializeField] float RegGunCooldown = .75f;
     [SerializeField] LayerMask HitLayer;
@@ -16,18 +17,24 @@ public class FireWeapon : MonoBehaviour
     //Icebullets
     [SerializeField] GameObject IceBullet = null;
     [SerializeField] float IceshootSpeed;
-    [SerializeField] GameObject IceshootTarget=null;
+    [SerializeField] GameObject IceshootTarget = null;
     [SerializeField] float IceBulletDecay = .7f;
     //Icewall
     [SerializeField] IceWallGrowth IceWall = null;
     [SerializeField] float IceWallCooldown = 1f;
+    [SerializeField] Text CounterIceWall;
+    [SerializeField] RawImage BackgroundIceCounter;
+
+    private float IceWallTimer = 0;
     bool CanIceWall = true;
 
-
-    //float NothingHitTimer = 0f;
-
+    //Sounds and particles
+    private AudioSource audioSwapGun = null;
+    [SerializeField] AudioClip audioClipRegGun = null;
+    [SerializeField] AudioClip audioClipFreezeGun = null;
     [SerializeField] ParticleSystem MuzzleFlash = null;
     [SerializeField] AudioSource GunShot = null;
+    [SerializeField] ParticleSystem IceGunParticle = null;
 
     RaycastHit rayHit; //object hit
     RaycastHit rayIceWallHit;
@@ -37,17 +44,41 @@ public class FireWeapon : MonoBehaviour
     int FreezeShoot = 0;
     bool CanRegShoot = true;
 
+    public void Awake()
+    {
+        CounterIceWall.text = "";
+        BackgroundIceCounter.enabled = false;
+        audioSwapGun = GunShot.GetComponent<AudioSource>();
+        audioSwapGun.clip = audioClipFreezeGun;
+    }
+
     private void Update()
     {
+        if (Input.GetKeyUp(KeyCode.Mouse0))
+            IceGunParticle.Emit(0);
 
         if (Input.GetKey(KeyCode.Mouse0))
         {
+            IceGunParticle.Emit(1);
             if (FreezeShoot == 0)
             {
+
                 DelayHelper.DelayAction(this, Shoot, IceGunCooldown);
                 //Shoot();
                 SwapMode = 0;
                 FreezeShoot = 1;
+
+                //play sound
+                if (audioSwapGun.isPlaying == false)
+                {
+                    // ... play them.
+                    if (audioSwapGun.clip != audioClipFreezeGun)
+                        audioSwapGun.clip = audioClipFreezeGun;
+                    audioSwapGun.Play();
+                }
+
+
+
             }
         }
         else if (Input.GetKeyDown(KeyCode.Mouse1))
@@ -63,19 +94,48 @@ public class FireWeapon : MonoBehaviour
                 //noises and particles
                 MuzzleFlash.Play();
                 //Sound
-                GunShot.Play();
-                
+
+                if (audioSwapGun.clip != audioClipRegGun)
+                    audioSwapGun.clip = audioClipRegGun;
+                audioSwapGun.Play();
+
             }
-            
+
 
         }
-        if(Input.GetKey(KeyCode.F))
+        else
+        {
+            if (audioSwapGun.clip == audioClipFreezeGun)
+            {
+                if (SwapMode == 0)
+                    audioSwapGun.Stop();
+            }
+        }
+        if (Input.GetKey(KeyCode.F))
         {
             if (CanIceWall == true)
             {
-                DelayHelper.DelayAction(this, IceWallOnCooldown, IceWallCooldown);
+                //DelayHelper.DelayAction(this, IceWallOnCooldown, IceWallCooldown);
                 IceWallMaker();
                 CanIceWall = false;
+
+                //Play sound
+
+
+            }
+
+        }
+
+        if (CanIceWall == false)
+        {
+            BackgroundIceCounter.enabled = true;
+            IceWallTimer += Time.deltaTime;
+            int IceWallTimerConverted = (int)IceWallTimer;
+            IceWallTimerConverted = (int)IceWallCooldown - IceWallTimerConverted;
+            CounterIceWall.text = IceWallTimerConverted.ToString();
+            if (IceWallTimer >= IceWallCooldown)
+            {
+                IceWallOnCooldown();
             }
         }
 
@@ -99,9 +159,11 @@ public class FireWeapon : MonoBehaviour
 
     void IceWallOnCooldown()
     {
-
+        BackgroundIceCounter.enabled = false;
         CanIceWall = true;
-        //Debug.Log("no longer on cooldown = " + CanRegShoot);
+        IceWallTimer = 0f;
+        CounterIceWall.text = "";
+       
     }
 
 
@@ -123,31 +185,33 @@ public class FireWeapon : MonoBehaviour
             tempDistance = IceGunDistance;
         }
 
-        if (Physics.Raycast(rayOrigin.position, rayDirection, out rayHit, tempDistance, HitLayer) && SwapMode==1)
+        if (Physics.Raycast(rayOrigin.position, rayDirection, out rayHit, tempDistance, HitLayer) && SwapMode == 1)
         {
             Debug.Log("Hit " + rayHit.transform.name + " at " + rayHit.transform.position);
             //LightHit.transform.position = rayHit.point;
-            if(SwapMode==1)
-           
+            if (SwapMode == 1)
 
 
-            if (rayHit.transform.tag == "Enemy")
-            {
-                //Apply Damage if Swampmode 1
-                if (SwapMode == 1)
+
+                if (rayHit.transform.tag == "Enemy")
                 {
-                   
-
-
-                    Enemy Turret0 = rayHit.transform.gameObject.GetComponent<Enemy>();
-                    if (Turret0 != null)
+                    //Apply Damage if Swampmode 1
+                    if (SwapMode == 1)
                     {
-                        //HitCircle.color = Color.red;
-                        //DelayHelper.DelayAction(this, swapToWhite, .7f);
-                        Turret0.TakeDamage(weaponDamage);
+
+
+
+                        Enemy Turret0 = rayHit.transform.gameObject.GetComponent<Enemy>();
+                        if (Turret0 != null)
+                        {
+                            //HitCircle.color = Color.red;
+                            //DelayHelper.DelayAction(this, swapToWhite, .7f);
+                            Turret0.TakeDamage(weaponDamage);
+                        }
                     }
                 }
-            }
+            GunHitImpact.transform.position = rayHit.point;
+            GunHitImpact.Play();
         }
         else
         {
@@ -182,7 +246,7 @@ public class FireWeapon : MonoBehaviour
         }
 
 
-      
+
 
         if (SwapMode == 0)
             FreezeShoot = 0;
@@ -208,6 +272,14 @@ public class FireWeapon : MonoBehaviour
                 );
 
             //Debug.Log(IceWall.name + " spawned at " + IceWall.transform.position);
+        }
+        else
+        {
+            Debug.Log("icewall didn't hit anything..");
+            IceWallTimer = IceWallCooldown;
+            CanIceWall = true;
+
+
         }
     }
 

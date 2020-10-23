@@ -4,9 +4,12 @@ public class Enemy : MonoBehaviour
 {
     //Stores Player Info
     public GameObject Player = null;
+    private GameObject LV_Translater = null;
+    private Level01Controller LV = null;
     public Vector3 PlayerPos;
     //[SerializeField] GameObject ProjectionCube = null;
-    [SerializeField] Text HitCircle;
+    private Text HitCircle = null;
+    private GameObject HitCircle_Translater = null;
     //Intergers and inside units
     public int Health = 5;
     bool IsFreezeOn = false;
@@ -25,14 +28,14 @@ public class Enemy : MonoBehaviour
     private Vector3 targetVelocity;
     public GameObject projectile;
     [SerializeField] float shootSpeed;
-    [SerializeField] float ShootCoolDown=0;
+    [SerializeField] float ShootCoolDown = 0;
     public bool targetingOn = false;
     private float timerShoot;
+    private float frozenSoundTimer = 0f;
 
 
 
 
-    
     //How many freezing hits does it take to hit FreezeTime
     [SerializeField] float FreezeLimit = 1.5f;
     //What the current Freeze is at
@@ -41,14 +44,24 @@ public class Enemy : MonoBehaviour
     [SerializeField] float FreezeDamage = .1f;
     //The rate the Enemy unfreezes
     [SerializeField] float Unfreeze = .1f;
-
-
+    // Amount of time before it gets unfrozen if untouched
+    [SerializeField] float DecayFreezeLimit = 2f;
+    private float DecayFreezeLimitTimer = 0;
+    private bool DecayTimerFinished = false;
     //Colliders and Visuals
     [SerializeField] Collider colliderToDeactivate1 = null;
     [SerializeField] Collider colliderToDeactivate2 = null;
     [SerializeField] Collider SphereCollider = null;
     [SerializeField] GameObject visualsToDeactivate = null;
     [SerializeField] GameObject IceCube = null;
+    [SerializeField] ParticleSystem Exploder = null;
+    [SerializeField] GameObject SpottedSymbol = null;
+    //sounds
+    [SerializeField] AudioSource EnemyAudio = null;
+    [SerializeField] AudioClip AudioFreezing = null;
+    [SerializeField] AudioClip AudioFrozen = null;
+    [SerializeField] AudioClip AudioExploding = null;
+
 
     private Vector3 scaleChange, positionChange, ogScale, ogPosition;
     private void Awake()
@@ -58,7 +71,11 @@ public class Enemy : MonoBehaviour
         ogScale = IceCube.transform.localScale;
         ogPosition = IceCube.transform.position;
         rb = Player.GetComponent<Rigidbody>();
-        
+        LV_Translater = GameObject.Find("LevelController");
+        LV = LV_Translater.GetComponent<Level01Controller>();
+        HitCircle_Translater = GameObject.Find("HitCircle");
+        HitCircle = HitCircle_Translater.GetComponent<Text>();
+        SpottedSymbol.SetActive(false);
     }
 
     private void Start()
@@ -91,11 +108,20 @@ public class Enemy : MonoBehaviour
 
     private void Update()
     {
+        frozenSoundTimer += Time.deltaTime;
+        DecayFreezeLimitTimer += Time.deltaTime;
         if (Health >= 1)
         {
+            if (DecayFreezeLimitTimer > DecayFreezeLimit && FreezeContainer > .001f && DecayTimerFinished == false && IsFreezeOn == false)
+            {
+                Debug.Log("decay freeze conditions have been met");
+                DelayHelper.DelayAction(this, UnfreezingAction, Unfreeze);
+                beginUnfreeze = true;
+            }
             //checks to see if they are frozen
             if (IsFreezeOn == true)
             {
+
                 //Begins the unfreeze effect after 2 seconds
                 if (frameStartUnFreeze == 0)
                 {
@@ -107,6 +133,7 @@ public class Enemy : MonoBehaviour
                 {
                     DelayHelper.DelayAction(this, UnfreezingAction, Unfreeze);
                     frameUnFreeze = 1;
+                    DecayTimerFinished = true;
                 }
             }
             else
@@ -128,13 +155,14 @@ public class Enemy : MonoBehaviour
         }
 
         NothingHitTimer += Time.deltaTime;
-        if (NothingHitTimer >= .6f)
+        if (NothingHitTimer >= .8f)
         {
             HitCircle.color = Color.white;
             NothingHitTimer = 0f;
         }
 
     }
+
 
 
 
@@ -145,17 +173,29 @@ public class Enemy : MonoBehaviour
 
         HitCircle.color = Color.red;
         DelayHelper.DelayAction(this, swapToWhite, .7f);
-
+        bool deathnoise = false;
 
         if (Health <= 0)
         {
+            if (deathnoise == false)
+            {
+                EnemyAudio.clip = AudioExploding;
+                EnemyAudio.Play();
+                deathnoise = true;
+                Exploder.Play();
+            }
+
             DisableObject();
             Debug.Log(this.transform.name + " is " + "dead");
+            LV.IncreaseScore(5);
+            if (IsFreezeOn == true)
+                LV.IncreaseScore(5);
         }
     }
     void swapToWhite()
     {
         HitCircle.color = Color.white;
+        NothingHitTimer = 0;
     }
 
 
@@ -176,14 +216,13 @@ public class Enemy : MonoBehaviour
 
     public void FreezeAdd()
     {
-        //Possible Noise here
 
-        //Code
 
 
 
         if (FreezeContainer < FreezeLimit && beginUnfreeze != true)
         {
+            DecayFreezeLimitTimer = 0;
             //Debug.Log("Freezing of " + this.transform.name + "is at " + FreezeContainer + " of " + FreezeLimit + " Limit ");
             //adds the freezedamage to the container
             FreezeContainer += FreezeDamage;
@@ -192,6 +231,9 @@ public class Enemy : MonoBehaviour
             //If the cube is still under the limit, then make it bigger
             if (FreezeContainer < FreezeLimit)
             {
+
+
+
                 scaleChange = new Vector3(0f, FreezeDamage, 0f);
                 positionChange = new Vector3(0.0f, FreezeDamage / 2, 0.0f);
 
@@ -202,12 +244,41 @@ public class Enemy : MonoBehaviour
                 NothingHitTimer = 0f;
 
             }
+            if (EnemyAudio.clip != AudioFreezing)
+                EnemyAudio.clip = AudioFreezing;
+            if (frozenSoundTimer >= .36f)
+            {
+                if (FreezeContainer < .3f)
+                {
+                    EnemyAudio.pitch = FreezeContainer * 50f;
+                    //Debug.Log("container at " + FreezeContainer);
+                    //Debug.Log("playing at pitch " + FreezeContainer * 50f);
+                }
+                else
+                {
+                    EnemyAudio.pitch = FreezeContainer * 2.5f;
+                    //Debug.Log("swapped");
+                    //Debug.Log("playing at pitch " + FreezeContainer * 2.5f);
+                }
+                EnemyAudio.Play();
+                frozenSoundTimer = 0f;
+            }
+
+
             //If it goes over the limit, then begin the frozen and unfreeze mechanics
             if (FreezeContainer >= FreezeLimit)
             {
                 Debug.Log(this.transform.name + " is Frozen!");
                 FreezeContainer = FreezeLimit;
                 IceAge();
+
+                if (EnemyAudio.clip != AudioFrozen)
+                {
+                    EnemyAudio.pitch = 1;
+                    EnemyAudio.clip = AudioFrozen;
+                    EnemyAudio.Play();
+                }
+
             }
         }
         else
@@ -241,7 +312,7 @@ public class Enemy : MonoBehaviour
     //causes a delay before unfreezing
     void FreezeDelay()
     {
-        if (beginUnfreeze != true && FreezeContainer>0)
+        if (beginUnfreeze != true && FreezeContainer > 0)
         {
             Debug.Log("turning on beginunfreeze");
             beginUnfreeze = true;
@@ -263,6 +334,7 @@ public class Enemy : MonoBehaviour
             //Debug.Log("unfreezing at : " + FreezeContainer);
             if (FreezeContainer <= 0)
             {
+                Debug.Log("reseting icecube");
                 ResetIceCube();
             }
 
@@ -274,6 +346,8 @@ public class Enemy : MonoBehaviour
     void ResetIceCube()
     {
         Debug.Log("unfrozen");
+        DecayTimerFinished = false;
+        DecayFreezeLimitTimer = 0f;
         beginUnfreeze = false;
         IsFreezeOn = false;
         IceCube.SetActive(false);
@@ -287,7 +361,7 @@ public class Enemy : MonoBehaviour
 
     void ShootPlayer()
     {
-        if (targetingOn == true && IsFreezeOn!=true)
+        if (targetingOn == true && IsFreezeOn != true)
         {
             float projectileTimeToTarget = distanceToTarget / shootSpeed;
             Vector3 projectedTarget = targetpos + targetVelocity * projectileTimeToTarget;
@@ -295,14 +369,18 @@ public class Enemy : MonoBehaviour
             bullet1.transform.LookAt(projectedTarget);
             Rigidbody rb1 = bullet1.GetComponent<Rigidbody>();
             rb1.velocity = bullet1.transform.forward * shootSpeed;
-           
+
         }
 
         timerShoot = 0f;
 
     }
-
-
+    /*
+    public void GetIsPlaying(bool Playing)
+    {
+        IsPlaying = Playing;
+    }
+    */
 
 
 

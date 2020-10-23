@@ -31,6 +31,15 @@ public class AudioManager : MonoBehaviour
         _audioSource.clip = clip;
         _audioSource.Play();
     }
+    public void StopSong()
+    {
+        _audioSource.Stop();
+    }
+    public void RestartSong()
+    {
+        _audioSource.Stop();
+        _audioSource.Play();
+    }
 
 }
 
