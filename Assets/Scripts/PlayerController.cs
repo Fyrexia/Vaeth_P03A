@@ -21,6 +21,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] float DodgeTimer = 3f;
     [SerializeField] float DodgeSpeed = .3f;
     [SerializeField] float DodgeCooldown = 3f;
+    private float JumpStrenghOG = 0f;
     private bool IsImmune = false;
  
     [SerializeField] Text YouLose = null;
@@ -50,7 +51,7 @@ public class PlayerController : MonoBehaviour
         RedBoxLeft.enabled = false;
         RedBoxRight.enabled = false;
         Cursor.lockState = CursorLockMode.Locked;
-
+        JumpStrenghOG = jumpStrength;
 
     }
 
@@ -102,7 +103,7 @@ public class PlayerController : MonoBehaviour
 
         }
 
-        if (HP == 0)
+        if (HP <= 0)
         {
             if (IsPlaying == true)
             {
@@ -167,9 +168,10 @@ public class PlayerController : MonoBehaviour
     {
         if (IsImmune == false)
         {
-            HP += HPupdate;
+           
             if (HPupdate < 0)
             {
+                HP += HPupdate;
                 AudioHits.clip = AudioDamaged;
                 AudioHits.Play();
                 RedBoxLeft.enabled = true;
@@ -178,6 +180,14 @@ public class PlayerController : MonoBehaviour
                 RedBoxRight.CrossFadeAlpha(0, .5f, false);
                 DelayHelper.DelayAction(this,Resetboxes, .5f);
             }
+            if(HPupdate>0)
+            {
+                if(HP<5)
+                {
+                    HP += HPupdate;
+                }
+            }
+            
             int HealhGUISize = HP * 100;
             HealthGUI.rectTransform.sizeDelta = new Vector2(HealhGUISize, 50);
         }
@@ -197,10 +207,15 @@ public class PlayerController : MonoBehaviour
 
     }
 
-
+    // I meant set... wasn't sure if I changed it how much would break
     public void GetIsPlaying(bool Check)
     {
         IsPlaying = Check;
+    }
+
+    public bool CheckIsPlaying()
+    {
+        return IsPlaying;
     }
 
 
@@ -278,7 +293,13 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    public void JumpPadActivation(float JumpChange)
+    {
+        jumpStrength = JumpChange;
+    }
 
-
-
+    public void JumpPadLeave()
+    {
+        jumpStrength = JumpStrenghOG;
+    }
 }

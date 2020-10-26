@@ -4,6 +4,8 @@ public class Enemy : MonoBehaviour
 {
     //Stores Player Info
     public GameObject Player = null;
+    private GameObject PLC_translater = null;
+    private PlayerController PLC;
     private GameObject LV_Translater = null;
     private Level01Controller LV = null;
     public Vector3 PlayerPos;
@@ -71,6 +73,8 @@ public class Enemy : MonoBehaviour
         ogScale = IceCube.transform.localScale;
         ogPosition = IceCube.transform.position;
         rb = Player.GetComponent<Rigidbody>();
+        PLC_translater = GameObject.Find("FPSCharacter");
+        PLC = PLC_translater.GetComponent<PlayerController>();
         LV_Translater = GameObject.Find("LevelController");
         LV = LV_Translater.GetComponent<Level01Controller>();
         HitCircle_Translater = GameObject.Find("HitCircle");
@@ -183,8 +187,10 @@ public class Enemy : MonoBehaviour
                 EnemyAudio.Play();
                 deathnoise = true;
                 Exploder.Play();
-            }
+                PLC.UpdateHealth(1);
 
+            }
+            
             DisableObject();
             Debug.Log(this.transform.name + " is " + "dead");
             LV.IncreaseScore(5);
@@ -192,6 +198,12 @@ public class Enemy : MonoBehaviour
                 LV.IncreaseScore(5);
         }
     }
+
+    
+    
+        
+  
+
     void swapToWhite()
     {
         HitCircle.color = Color.white;

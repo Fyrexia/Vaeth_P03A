@@ -263,7 +263,7 @@ GameObject:
   - component: {fileID: 3977148041924304200}
   - component: {fileID: 3977148041924304201}
   - component: {fileID: 3977148041924304203}
-  m_Layer: 8
+  m_Layer: 0
   m_Name: DetectionZone
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -295,7 +295,7 @@ SphereCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 26.021397
+  m_Radius: 40
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &3977148041924304203
 MonoBehaviour:
@@ -373,8 +373,8 @@ BoxCollider:
   m_IsTrigger: 0
   m_Enabled: 1
   serializedVersion: 2
-  m_Size: {x: 1, y: 0.7259238, z: 0.6322479}
-  m_Center: {x: 0, y: 0.7, z: 0}
+  m_Size: {x: 0.83187103, y: 1.2160835, z: 0.69281006}
+  m_Center: {x: 0.0094947815, y: 0.9450798, z: 0.030529022}
 --- !u!135 &3977148042008967790
 SphereCollider:
   m_ObjectHideFlags: 0

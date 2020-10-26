@@ -9,9 +9,13 @@ public class Level01Controller : MonoBehaviour
     [SerializeField] Text currentScoreTextView;
     [SerializeField] GameObject PauseMenu;
     [SerializeField] Text Healthtxt;
+    [SerializeField] TextMesh MeshCurrentScore;
+    [SerializeField] TextMesh MeshHighscore;
     [SerializeField] AudioSource MusicPlayer = null;
     [SerializeField] AudioClip Music = null;
-    int currentScore;
+    public int currentScore;
+    public int HighscoreFinish;
+    public bool FinishLineCrossed = false;
     //public int PC1.HP = 5;
     public int HealthDif = 5;
     public PlayerController PC1;
@@ -26,14 +30,30 @@ public class Level01Controller : MonoBehaviour
 
     private void Update()
     {
-        
+        MeshCurrentScore.text = "Score Achieved: " + currentScore;
+        if (FinishLineCrossed == true)
+        {
+          
+            int highscore = PlayerPrefs.GetInt("HighScore");
+            MeshHighscore.text = "Current HighScore: " + highscore;
+            Debug.Log(highscore);
+            if (HighscoreFinish > highscore)
+            {
+                PlayerPrefs.SetInt("HighScore", HighscoreFinish);
+                MeshHighscore.text = "Current HighScore: " + highscore;
+                Debug.Log("New high score: " + highscore);
+            }
+        }
         //PC1.HP=PC1.ReturnHealth();
         //This controls the GUI Health
         if(PC1.HP <= HealthDif)
         {
             HealthChange(PC1.HP);
         }
-
+        if(PC1.CheckIsPlaying()==true)
+        {
+            Cursor.visible = false;
+        }
 
        
         /*
@@ -45,6 +65,7 @@ public class Level01Controller : MonoBehaviour
         */
         if (Input.GetKeyDown(KeyCode.Escape))
         {
+            Debug.Log("hitting escape");
             //ExitLevel();
             Cursor.lockState = CursorLockMode.Confined;
             Cursor.visible = true;
@@ -87,11 +108,12 @@ public class Level01Controller : MonoBehaviour
     public void ExitLevel()
     {
         int highscore = PlayerPrefs.GetInt("HighScore");
-        if(currentScore>highscore)
+        Debug.Log(highscore);
+        /*if(HighscoreFinish>highscore)
         {
-            PlayerPrefs.SetInt("HighScore", currentScore);
-            Debug.Log("New high score: " + currentScore);
-        }
+            PlayerPrefs.SetInt("HighScore", HighscoreFinish);
+            Debug.Log("New high score: " + HighscoreFinish);
+        }*/
         SceneManager.LoadScene("MainMenu");
     }
 }

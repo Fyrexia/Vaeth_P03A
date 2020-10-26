@@ -7,7 +7,7 @@ public class HazardVolume : MonoBehaviour
     [SerializeField] GameObject visualsToDeactivate = null;
     [SerializeField] float DisableAtTime = 0f;
     [SerializeField] bool BeDisabled = false;
-    
+    [SerializeField] int Damage = -1;
     private float Timer1 = 0f;
     Collider colliderToDeactivate = null;
    
@@ -26,11 +26,12 @@ public class HazardVolume : MonoBehaviour
         if (player1 != null)
         {
             Debug.Log("player has been hit");
-            player1.UpdateHealth(-1);
+            player1.UpdateHealth(Damage);
+            if(BeDisabled==true)
             DisableObject();
            
         }
-        else if(other.transform.tag == "IceWall" && BeDisabled==true)
+        else if(other.transform.tag == "IceWall" && BeDisabled==true || other.transform.tag == "Ice" && BeDisabled==true)
         {
             DisableObject();    
         }

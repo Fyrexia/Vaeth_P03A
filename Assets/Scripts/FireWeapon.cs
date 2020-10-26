@@ -36,6 +36,10 @@ public class FireWeapon : MonoBehaviour
     [SerializeField] AudioSource GunShot = null;
     [SerializeField] ParticleSystem IceGunParticle = null;
 
+    //Player controller
+    private PlayerController PL = null;
+  
+
     RaycastHit rayHit; //object hit
     RaycastHit rayIceWallHit;
     //Swapmode 1 is Regular Gun
@@ -50,104 +54,111 @@ public class FireWeapon : MonoBehaviour
         BackgroundIceCounter.enabled = false;
         audioSwapGun = GunShot.GetComponent<AudioSource>();
         audioSwapGun.clip = audioClipFreezeGun;
+       
+        PL = this.GetComponent<PlayerController>();
+
+
     }
 
     private void Update()
     {
-        if (Input.GetKeyUp(KeyCode.Mouse0))
-            IceGunParticle.Emit(0);
-
-        if (Input.GetKey(KeyCode.Mouse0))
+      
+        if (PL.CheckIsPlaying() == true)
         {
-            IceGunParticle.Emit(1);
-            if (FreezeShoot == 0)
+            if (Input.GetKeyUp(KeyCode.Mouse0))
+                IceGunParticle.Emit(0);
+
+            if (Input.GetKey(KeyCode.Mouse0))
+            {
+                IceGunParticle.Emit(1);
+                if (FreezeShoot == 0)
+                {
+
+                    DelayHelper.DelayAction(this, Shoot, IceGunCooldown);
+                    //Shoot();
+                    SwapMode = 0;
+                    FreezeShoot = 1;
+
+                    //play sound
+                    if (audioSwapGun.isPlaying == false)
+                    {
+                        // ... play them.
+                        if (audioSwapGun.clip != audioClipFreezeGun)
+                            audioSwapGun.clip = audioClipFreezeGun;
+                        audioSwapGun.Play();
+                    }
+
+
+
+                }
+            }
+            else if (Input.GetKeyDown(KeyCode.Mouse1))
             {
 
-                DelayHelper.DelayAction(this, Shoot, IceGunCooldown);
-                //Shoot();
-                SwapMode = 0;
-                FreezeShoot = 1;
-
-                //play sound
-                if (audioSwapGun.isPlaying == false)
+                if (CanRegShoot == true)
                 {
-                    // ... play them.
-                    if (audioSwapGun.clip != audioClipFreezeGun)
-                        audioSwapGun.clip = audioClipFreezeGun;
+                    DelayHelper.DelayAction(this, RegGunOnCooldown, RegGunCooldown);
+                    SwapMode = 1;
+                    Shoot();
+                    //Debug.Log("doing regular shot");
+                    CanRegShoot = false;
+                    //noises and particles
+                    MuzzleFlash.Play();
+                    //Sound
+
+                    if (audioSwapGun.clip != audioClipRegGun)
+                        audioSwapGun.clip = audioClipRegGun;
                     audioSwapGun.Play();
+
                 }
 
 
-
             }
-        }
-        else if (Input.GetKeyDown(KeyCode.Mouse1))
-        {
-
-            if (CanRegShoot == true)
+            else
             {
-                DelayHelper.DelayAction(this, RegGunOnCooldown, RegGunCooldown);
-                SwapMode = 1;
-                Shoot();
-                //Debug.Log("doing regular shot");
-                CanRegShoot = false;
-                //noises and particles
-                MuzzleFlash.Play();
-                //Sound
-
-                if (audioSwapGun.clip != audioClipRegGun)
-                    audioSwapGun.clip = audioClipRegGun;
-                audioSwapGun.Play();
-
+                if (audioSwapGun.clip == audioClipFreezeGun)
+                {
+                    if (SwapMode == 0)
+                        audioSwapGun.Stop();
+                }
             }
-
-
-        }
-        else
-        {
-            if (audioSwapGun.clip == audioClipFreezeGun)
+            if (Input.GetKey(KeyCode.F))
             {
-                if (SwapMode == 0)
-                    audioSwapGun.Stop();
+                if (CanIceWall == true)
+                {
+                    //DelayHelper.DelayAction(this, IceWallOnCooldown, IceWallCooldown);
+                    IceWallMaker();
+                    CanIceWall = false;
+
+                    //Play sound
+
+
+                }
+
             }
-        }
-        if (Input.GetKey(KeyCode.F))
-        {
-            if (CanIceWall == true)
+
+            if (CanIceWall == false)
             {
-                //DelayHelper.DelayAction(this, IceWallOnCooldown, IceWallCooldown);
-                IceWallMaker();
-                CanIceWall = false;
-
-                //Play sound
-
-
+                BackgroundIceCounter.enabled = true;
+                IceWallTimer += Time.deltaTime;
+                int IceWallTimerConverted = (int)IceWallTimer;
+                IceWallTimerConverted = (int)IceWallCooldown - IceWallTimerConverted;
+                CounterIceWall.text = IceWallTimerConverted.ToString();
+                if (IceWallTimer >= IceWallCooldown)
+                {
+                    IceWallOnCooldown();
+                }
             }
 
-        }
-
-        if (CanIceWall == false)
-        {
-            BackgroundIceCounter.enabled = true;
-            IceWallTimer += Time.deltaTime;
-            int IceWallTimerConverted = (int)IceWallTimer;
-            IceWallTimerConverted = (int)IceWallCooldown - IceWallTimerConverted;
-            CounterIceWall.text = IceWallTimerConverted.ToString();
-            if (IceWallTimer >= IceWallCooldown)
+            /*
+            NothingHitTimer += Time.deltaTime;
+            if (NothingHitTimer >= .6f)
             {
-                IceWallOnCooldown();
+                HitCircle.color = Color.white;
+                NothingHitTimer = 0f;
             }
+            */
         }
-
-        /*
-        NothingHitTimer += Time.deltaTime;
-        if (NothingHitTimer >= .6f)
-        {
-            HitCircle.color = Color.white;
-            NothingHitTimer = 0f;
-        }
-        */
-
     }
 
     void RegGunOnCooldown()
