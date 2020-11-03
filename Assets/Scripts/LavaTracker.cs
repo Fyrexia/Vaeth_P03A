@@ -66,9 +66,15 @@ public class LavaTracker : MonoBehaviour
         PlayerPos = Player.transform.position;
         LavaPos = Lava.transform.position;
         //UI_PlayerPos.y += .1f; 
-        //The Way this works from my guesswork is that Each thing compares its Current to it's starting pos (which is at the bottom), then we use the *times numberal to change the rate on how far the icon goes
-        UI_PlayerPos.y = (PlayerPos.y*3.7f - Player_StartingLine) + (UI_PlayerRec.position.y + UI_Player_StartingLine);
-        UI_LavaPos.y = (LavaPos.y*3.7f - Lava_StartingLine) + (UI_LavaRec.position.y+59f + UI_Lava_StartingLine);
+       
+        //UI_PlayerPos.y = (PlayerPos.y*3.7f - Player_StartingLine) + (UI_PlayerRec.position.y + UI_Player_StartingLine);
+        //UI_LavaPos.y = (LavaPos.y*3.7f - Lava_StartingLine) + (UI_LavaRec.position.y+59f + UI_Lava_StartingLine);
+
+        UI_PlayerPos.y = (PlayerPos.y - Player_StartingLine)*4.5f;
+        UI_LavaPos.y =  (LavaPos.y)*4.5f;
+        Debug.Log("PlayerPos: " + PlayerPos.y + "+ PlayerStartingLine: " + Player_StartingLine + "=" + (PlayerPos.y - Player_StartingLine));
+        Debug.Log("LavaPos: " + LavaPos.y + "+ LavaStartingLine: " + Lava_StartingLine + "=" + (PlayerPos.y - Player_StartingLine));
+
 
         UI_PlayerRec.localPosition =UI_PlayerPos;
         UI_LavaRec.localPosition = UI_LavaPos;
