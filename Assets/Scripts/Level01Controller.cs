@@ -30,7 +30,7 @@ public class Level01Controller : MonoBehaviour
 
     private void Update()
     {
-        MeshCurrentScore.text = "Score Achieved: " + currentScore;
+      //  MeshCurrentScore.text = "Score Achieved: " + currentScore;
         if (FinishLineCrossed == true)
         {
           

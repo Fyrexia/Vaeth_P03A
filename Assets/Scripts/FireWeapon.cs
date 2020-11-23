@@ -2,6 +2,15 @@
 using UnityEngine.UI;
 public class FireWeapon : MonoBehaviour
 {
+    [SerializeField] float Ammo = 200f;
+    [SerializeField] float CurrentAmmo = 200f;
+    [SerializeField] Text AmmoText = null;
+    private bool AmmoReloading = false;
+    [SerializeField] GameObject Gun = null;
+    private Quaternion gunOgPos;
+    private Quaternion gunTrPos;
+    private float GunAnimTimer = 0f;
+
     [SerializeField] Camera cameraController;
     [SerializeField] Transform rayOrigin = null;
     [SerializeField] float RegshootDistance = 10f;
@@ -14,6 +23,12 @@ public class FireWeapon : MonoBehaviour
     [SerializeField] LayerMask HitLayer;
     [SerializeField] LayerMask HitLayerIce;
     //[SerializeField] Text HitCircle;
+    //Ultimate
+    [SerializeField] GameObject Ult_Obj = null;
+    [SerializeField] Text UltBarText = null;
+    [SerializeField] float throwSpeed = 2f;
+    [SerializeField] float UltBar = 0f;
+    public bool CanUlt = false;
     //Icebullets
     [SerializeField] GameObject IceBullet = null;
     [SerializeField] float IceshootSpeed;
@@ -24,17 +39,28 @@ public class FireWeapon : MonoBehaviour
     [SerializeField] float IceWallCooldown = 1f;
     [SerializeField] Text CounterIceWall;
     [SerializeField] RawImage BackgroundIceCounter;
+    //reload
+    [SerializeField] RawImage Reloadbar;
+    private float ReloadBarSpeed;
 
     private float IceWallTimer = 0;
     bool CanIceWall = true;
+    //Right Click
+    [SerializeField] GameObject IceProjectile = null;
+    [SerializeField] GameObject ShootingArea = null;
+    [SerializeField] GameObject IceProjectileStart = null;
+    [SerializeField] float shootSpeed = 1;
 
     //Sounds and particles
-    private AudioSource audioSwapGun = null;
+    [SerializeField] AudioSource audioSwapGun = null;
     [SerializeField] AudioClip audioClipRegGun = null;
     [SerializeField] AudioClip audioClipFreezeGun = null;
+    [SerializeField] AudioClip GunReload = null;
+
     [SerializeField] ParticleSystem MuzzleFlash = null;
     [SerializeField] AudioSource GunShot = null;
     [SerializeField] ParticleSystem IceGunParticle = null;
+  
 
     //Player controller
     private PlayerController PL = null;
@@ -52,23 +78,27 @@ public class FireWeapon : MonoBehaviour
     {
         CounterIceWall.text = "";
         BackgroundIceCounter.enabled = false;
-        audioSwapGun = GunShot.GetComponent<AudioSource>();
+      //  audioSwapGun = GunShot.GetComponent<AudioSource>();
         audioSwapGun.clip = audioClipFreezeGun;
        
         PL = this.GetComponent<PlayerController>();
 
+        gunOgPos = Gun.transform.rotation;
+        gunTrPos = Gun.transform.rotation;
 
+        ReloadBarSpeed = 0;
+        Reloadbar.rectTransform.sizeDelta = new Vector2(ReloadBarSpeed, 16.72247f);
     }
 
     private void Update()
     {
-      
-        if (PL.CheckIsPlaying() == true)
+
+        if (PL.CheckIsPlaying() == true && PL.CheckCanMove() == true)
         {
             if (Input.GetKeyUp(KeyCode.Mouse0))
                 IceGunParticle.Emit(0);
 
-            if (Input.GetKey(KeyCode.Mouse0))
+            if (Input.GetKey(KeyCode.Mouse0) && CurrentAmmo >= 1 && AmmoReloading == false)
             {
                 IceGunParticle.Emit(1);
                 if (FreezeShoot == 0)
@@ -95,7 +125,7 @@ public class FireWeapon : MonoBehaviour
             else if (Input.GetKeyDown(KeyCode.Mouse1))
             {
 
-                if (CanRegShoot == true)
+                if (CanRegShoot == true && CurrentAmmo >= 1 && AmmoReloading == false)
                 {
                     DelayHelper.DelayAction(this, RegGunOnCooldown, RegGunCooldown);
                     SwapMode = 1;
@@ -107,8 +137,8 @@ public class FireWeapon : MonoBehaviour
                     //Sound
 
                     if (audioSwapGun.clip != audioClipRegGun)
-                        audioSwapGun.clip = audioClipRegGun;
-                    audioSwapGun.Play();
+                        GunShot.clip = audioClipRegGun;
+                    GunShot.Play();
 
                 }
 
@@ -149,6 +179,21 @@ public class FireWeapon : MonoBehaviour
                     IceWallOnCooldown();
                 }
             }
+            // && CanUlt==true 
+            if (Input.GetKeyDown(KeyCode.Q) && UltBar == 100f)
+            {
+
+                GameObject Ult_Obj1 = Instantiate(Ult_Obj, ShootingArea.transform.position, Quaternion.identity);
+                Ult_Obj1.transform.LookAt(IceProjectileStart.transform.position);
+                Rigidbody rb1 = Ult_Obj1.GetComponent<Rigidbody>();
+                rb1.velocity = Ult_Obj1.transform.forward * throwSpeed;
+                UltBar = 0f;
+                UltBarText.text = (Mathf.FloorToInt(UltBar)).ToString();
+                DelayHelper.DelayAction(this, CanUltChange, 4f);
+            }
+
+
+
 
             /*
             NothingHitTimer += Time.deltaTime;
@@ -158,6 +203,22 @@ public class FireWeapon : MonoBehaviour
                 NothingHitTimer = 0f;
             }
             */
+
+            if (Input.GetKey(KeyCode.R) && AmmoReloading == false)
+            {
+                DelayHelper.DelayAction(this, ReplenishAmmo, 2f);
+                AmmoReloading = true;
+                audioSwapGun.clip = GunReload;
+                audioSwapGun.Stop();
+                audioSwapGun.Play();
+            }
+            if (AmmoReloading == true)
+            {
+                Debug.Log("doing this");
+                ReloadBarSpeed += Time.deltaTime*70;
+                Reloadbar.rectTransform.sizeDelta = new Vector2(ReloadBarSpeed, 16.72247f);
+            }
+
         }
     }
 
@@ -177,7 +238,39 @@ public class FireWeapon : MonoBehaviour
        
     }
 
+   public void UltBarUpdate(float ultupdater)
+    {
+        Debug.Log("updating ult");
+        Debug.Log("canult ="+CanUlt);
+        Debug.Log("ultbar is at " + UltBar);
+        if (CanUlt == false)
+        {
+          
+            UltBar += ultupdater;
+            Debug.Log(UltBar);
+            UltBarText.text = (Mathf.FloorToInt(UltBar)).ToString();
+        }
+        if(UltBar>=100)
+        {
+            UltBar = 100;
+            CanUlt = true;
+            UltBarText.text = (Mathf.FloorToInt(UltBar)).ToString();
+        }
+    }
 
+    void CanUltChange()
+    {
+        CanUlt = false;
+    }
+
+    void ReplenishAmmo()
+    {
+        AmmoReloading = false;
+        CurrentAmmo = 200f;
+        AmmoText.text = CurrentAmmo.ToString()+"/200";
+        ReloadBarSpeed = 0;
+        Reloadbar.rectTransform.sizeDelta = new Vector2(ReloadBarSpeed, 16.72247f);
+    }
     void Shoot()
     {
         float tempDistance = 0f;
@@ -196,33 +289,47 @@ public class FireWeapon : MonoBehaviour
             tempDistance = IceGunDistance;
         }
 
-        if (Physics.Raycast(rayOrigin.position, rayDirection, out rayHit, tempDistance, HitLayer) && SwapMode == 1)
+       // if (Physics.Raycast(rayOrigin.position, rayDirection, out rayHit, tempDistance, HitLayer) && SwapMode == 1)
+        //{
+            /* Debug.Log("Hit " + rayHit.transform.name + " at " + rayHit.transform.position);
+             //LightHit.transform.position = rayHit.point;
+             if (SwapMode == 1)
+
+
+
+                 if (rayHit.transform.tag == "Enemy")
+                 {
+                     //Apply Damage if Swampmode 1
+                     if (SwapMode == 1)
+                     {
+
+
+
+                         Enemy Turret0 = rayHit.transform.gameObject.GetComponent<Enemy>();
+                         if (Turret0 != null)
+                         {
+                             //HitCircle.color = Color.red;
+                             //DelayHelper.DelayAction(this, swapToWhite, .7f);
+                             Turret0.TakeDamage(weaponDamage);
+                         }
+                     }
+                 }
+             GunHitImpact.transform.position = rayHit.point;
+             GunHitImpact.Play();*/
+
+      if(SwapMode==1)
         {
-            Debug.Log("Hit " + rayHit.transform.name + " at " + rayHit.transform.position);
-            //LightHit.transform.position = rayHit.point;
-            if (SwapMode == 1)
-
-
-
-                if (rayHit.transform.tag == "Enemy")
-                {
-                    //Apply Damage if Swampmode 1
-                    if (SwapMode == 1)
-                    {
-
-
-
-                        Enemy Turret0 = rayHit.transform.gameObject.GetComponent<Enemy>();
-                        if (Turret0 != null)
-                        {
-                            //HitCircle.color = Color.red;
-                            //DelayHelper.DelayAction(this, swapToWhite, .7f);
-                            Turret0.TakeDamage(weaponDamage);
-                        }
-                    }
-                }
-            GunHitImpact.transform.position = rayHit.point;
-            GunHitImpact.Play();
+            
+            GameObject bullet1 = Instantiate(IceProjectile, ShootingArea.transform.position, Quaternion.identity);
+            bullet1.transform.LookAt(IceProjectileStart.transform.position);
+            Rigidbody rb1 = bullet1.GetComponent<Rigidbody>();
+            rb1.velocity = bullet1.transform.forward * shootSpeed;
+            CurrentAmmo -= 50f;
+            if(CurrentAmmo<0)
+            {
+                CurrentAmmo = 0;
+            }
+            AmmoText.text = CurrentAmmo.ToString() + "/200";
         }
         else
         {
@@ -247,6 +354,13 @@ public class FireWeapon : MonoBehaviour
 
             //However, to make it more of an aoe range like an ice sprayer, it's more effective to make an inisible bullet thats big
             //Debug.Log("Shooting the icerays");
+
+            CurrentAmmo -= 1f;
+            if (CurrentAmmo < 0)
+            {
+                CurrentAmmo = 0;
+            }
+            AmmoText.text = CurrentAmmo.ToString() + "/200";
             GameObject Icebullet1 = Instantiate(IceBullet, rayOrigin.transform.position, Quaternion.identity);
             Icebullet1.transform.LookAt(IceshootTarget.transform.position);
             Rigidbody rb1 = Icebullet1.GetComponent<Rigidbody>();

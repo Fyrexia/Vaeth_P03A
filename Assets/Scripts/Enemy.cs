@@ -8,6 +8,7 @@ public class Enemy : MonoBehaviour
     private PlayerController PLC;
     private GameObject LV_Translater = null;
     private Level01Controller LV = null;
+    private FireWeapon WeaponHolder = null;
     public Vector3 PlayerPos;
     //[SerializeField] GameObject ProjectionCube = null;
     private Text HitCircle = null;
@@ -36,7 +37,8 @@ public class Enemy : MonoBehaviour
     private float frozenSoundTimer = 0f;
 
 
-
+    [SerializeField] float GunBarUlt = 10f;
+    [SerializeField] float FreezeBarUlt = .1f;
 
     //How many freezing hits does it take to hit FreezeTime
     [SerializeField] float FreezeLimit = 1.5f;
@@ -75,6 +77,7 @@ public class Enemy : MonoBehaviour
         rb = Player.GetComponent<Rigidbody>();
         PLC_translater = GameObject.Find("FPSCharacter");
         PLC = PLC_translater.GetComponent<PlayerController>();
+        WeaponHolder = PLC_translater.GetComponent<FireWeapon>();
         LV_Translater = GameObject.Find("LevelController");
         LV = LV_Translater.GetComponent<Level01Controller>();
         HitCircle_Translater = GameObject.Find("HitCircle");
@@ -179,6 +182,8 @@ public class Enemy : MonoBehaviour
         DelayHelper.DelayAction(this, swapToWhite, .7f);
         bool deathnoise = false;
 
+        WeaponHolder.UltBarUpdate(GunBarUlt);
+
         if (Health <= 0)
         {
             if (deathnoise == false)
@@ -243,7 +248,7 @@ public class Enemy : MonoBehaviour
             //If the cube is still under the limit, then make it bigger
             if (FreezeContainer < FreezeLimit)
             {
-
+                WeaponHolder.UltBarUpdate(FreezeBarUlt);
 
 
                 scaleChange = new Vector3(0f, FreezeDamage, 0f);

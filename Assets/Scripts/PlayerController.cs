@@ -14,16 +14,31 @@ public class PlayerController : MonoBehaviour
     public int HP = 5;
     private bool isRolling = false;
     public bool IsPlaying = true;
+    public bool CanMove = true;
+
+    private bool IsFrozenActive = false;
+    private bool IsFrozenC = false;
+
 
     [SerializeField] float moveSpeed = .1f;
     [SerializeField] float turnSpeed = 6f;
     [SerializeField] float jumpStrength = 10f;
+    [SerializeField] Camera PlayerCam = null;
     [SerializeField] float DodgeTimer = 3f;
     [SerializeField] float DodgeSpeed = .3f;
     [SerializeField] float DodgeCooldown = 3f;
+
+    [SerializeField] MeshRenderer IceCube = null;
+    [SerializeField] Camera IceCam = null;
+    [SerializeField] float IcCooldownTimer = 10f;
+    [SerializeField] float IcTimer = 4f;
+    private float IcActiveTimer = 0f;
+    private float IcCameraMovement = 0f;
+    private bool IcCameraStartMove = false;
+
     private float JumpStrenghOG = 0f;
     private bool IsImmune = false;
- 
+
     [SerializeField] Text YouLose = null;
     [SerializeField] Image HealthGUI = null;
     [SerializeField] Image RedBoxLeft = null;
@@ -40,6 +55,8 @@ public class PlayerController : MonoBehaviour
     [SerializeField] AudioClip AudioDodge = null;
     [SerializeField] AudioClip AudioDeath = null;
     [SerializeField] AudioClip AudioDamaged = null;
+    [SerializeField] AudioClip IceCubeMade = null;
+    [SerializeField] AudioClip IceCubeDestroyed = null;
 
     private void Awake()
     {
@@ -57,7 +74,9 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
-       
+        IceCam.enabled = false;
+        PlayerCam.enabled = true;
+        IceCube.enabled = false;
     }
 
 
@@ -66,30 +85,61 @@ public class PlayerController : MonoBehaviour
     {
         if (IsPlaying == true)
         {
-
-
-            if (Input.GetKeyDown(KeyCode.LeftShift) && Input.GetKey(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftShift) && Input.GetKey(KeyCode.D) || Input.GetKeyDown(KeyCode.LeftShift) && Input.GetKey(KeyCode.S))
+            if (Input.GetKeyDown(KeyCode.LeftShift) && IsFrozenC != true)
             {
-                if (Input.GetKey(KeyCode.W) == false && isRolling != true)
+                IsFrozenC = true;
+
+                IsImmune = true;
+                CanMove = false;
+
+                IceCube.enabled = true;
+
+                IceCam.enabled = true;
+                PlayerCam.enabled = false;
+
+                IceCam.fieldOfView = 0;
+                IcCameraStartMove = true;
+
+                AudioHits.clip = IceCubeMade;
+                AudioHits.Play();
+
+            }
+
+            if (IcCameraStartMove == true)
+            {
+
+                IceCam.fieldOfView += 3;
+                if (IceCam.fieldOfView >= 60)
                 {
-                    //motor.Dodge();
-                    moveSpeed = DodgeSpeed;
-                    isRolling = true;
-                    IsImmune = true;
-                    DelayHelper.DelayAction(this, RegressSpeed, .5f);
-                    AudioMovement.clip = AudioDodge;
-                    AudioMovement.Play();
-
+                    IcCameraStartMove = false;
+                    IceCam.fieldOfView = 60;
                 }
-
             }
-            else if (Input.GetKey(KeyCode.LeftShift) && isRolling != true)
-            {
-                moveSpeed = .2f;
-            }
-            else if (Input.GetKeyUp(KeyCode.LeftShift))
-                moveSpeed = OGmoveSpeed;
 
+
+            /*  if (Input.GetKeyDown(KeyCode.LeftShift) && Input.GetKey(KeyCode.A) || Input.GetKeyDown(KeyCode.LeftShift) && Input.GetKey(KeyCode.D) || Input.GetKeyDown(KeyCode.LeftShift) && Input.GetKey(KeyCode.S))
+              {
+                  if (Input.GetKey(KeyCode.W) == false && isRolling != true)
+                  {
+                      //motor.Dodge();
+                      moveSpeed = DodgeSpeed;
+                      isRolling = true;
+                      IsImmune = true;
+                      DelayHelper.DelayAction(this, RegressSpeed, .5f);
+                      AudioMovement.clip = AudioDodge;
+                      AudioMovement.Play();
+
+                  }
+
+              }
+
+              else if (Input.GetKey(KeyCode.LeftShift) && isRolling != true)
+              {
+                  moveSpeed = .2f;
+              }
+              else if (Input.GetKeyUp(KeyCode.LeftShift))
+                  moveSpeed = OGmoveSpeed;
+  */
 
             /*
             if (Input.GetKeyDown(KeyCode.Mouse1))
@@ -128,6 +178,22 @@ public class PlayerController : MonoBehaviour
             }
         }
 
+        if (IsFrozenC == true)
+        {
+            BackgroundDodgeCounter.enabled = true;
+            IcActiveTimer += Time.deltaTime;
+            int IceTimerConverted = (int)IcActiveTimer;
+            IceTimerConverted = (int)IcCooldownTimer - IceTimerConverted;
+            CounterDodge.text = IceTimerConverted.ToString();
+            if (IcActiveTimer >= IcTimer)
+            {
+                IceCubeCooldown();
+            }
+            if (IcActiveTimer >= IcCooldownTimer)
+            {
+                IceCubeRefresh();
+            }
+        }
 
 
 
@@ -136,6 +202,34 @@ public class PlayerController : MonoBehaviour
 
 
 
+    }
+
+
+    void IceCubeCooldown()
+    {
+        if (IceCube.enabled == true)
+        {
+            CanMove = true;
+            IsImmune = false;
+
+            IceCube.enabled = false;
+            IceCam.enabled = false;
+            PlayerCam.enabled = true;
+
+          
+            AudioHits.clip = IceCubeDestroyed;
+           
+            AudioHits.Play();
+           
+        }
+
+    }
+    void IceCubeRefresh()
+    {
+        IsFrozenC = false;
+        BackgroundDodgeCounter.enabled = false;
+        IcActiveTimer = 0f;
+        CounterDodge.text = "";
     }
 
     void RegressSpeed()
@@ -168,7 +262,7 @@ public class PlayerController : MonoBehaviour
     {
         if (IsImmune == false)
         {
-           
+
             if (HPupdate < 0)
             {
                 HP += HPupdate;
@@ -176,18 +270,18 @@ public class PlayerController : MonoBehaviour
                 AudioHits.Play();
                 RedBoxLeft.enabled = true;
                 RedBoxRight.enabled = true;
-                RedBoxLeft.CrossFadeAlpha(0, .5f,false);
+                RedBoxLeft.CrossFadeAlpha(0, .5f, false);
                 RedBoxRight.CrossFadeAlpha(0, .5f, false);
-                DelayHelper.DelayAction(this,Resetboxes, .5f);
+                DelayHelper.DelayAction(this, Resetboxes, .5f);
             }
-            if(HPupdate>0)
+            if (HPupdate > 0)
             {
-                if(HP<5)
+                if (HP < 5)
                 {
                     HP += HPupdate;
                 }
             }
-            
+
             int HealhGUISize = HP * 100;
             HealthGUI.rectTransform.sizeDelta = new Vector2(HealhGUISize, 50);
         }
@@ -218,6 +312,10 @@ public class PlayerController : MonoBehaviour
         return IsPlaying;
     }
 
+    public bool CheckCanMove()
+    {
+        return CanMove;
+    }
 
     private void OnEnable()
     {
@@ -239,7 +337,7 @@ public class PlayerController : MonoBehaviour
 
     void OnMove(Vector3 movement)
     {
-        if (IsPlaying == true)
+        if (IsPlaying == true && CanMove == true)
         {
             // Debug.Log("Move: " + movement);
             motor.Move(movement * moveSpeed);
@@ -247,7 +345,7 @@ public class PlayerController : MonoBehaviour
 
             if (moveSpeed == .1f)
             {
-                if (AudioMovement.isPlaying == false || AudioMovement.clip==AudioSprint && AudioMovement.isPlaying==true)
+                if (AudioMovement.isPlaying == false || AudioMovement.clip == AudioSprint && AudioMovement.isPlaying == true)
                 {
                     if (AudioMovement.clip == AudioSprint)
                         AudioMovement.Stop();
@@ -286,7 +384,7 @@ public class PlayerController : MonoBehaviour
 
     void OnJump()
     {
-        if (IsPlaying == true)
+        if (IsPlaying == true && CanMove == true)
         {
             //Debug.Log("Jump!");
             motor.Jump(jumpStrength);
